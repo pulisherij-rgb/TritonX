@@ -1,0 +1,189 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>TritonX — High-Performance Matrix Runtime</title>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        * { box-sizing: border-box; margin: 0; padding: 0; font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; }
+        html { scroll-behavior: smooth; }
+        body { background-color: #0b0f17; color: #f1f5f9; min-height: 100vh; display: flex; flex-direction: column; justify-content: space-between; padding: 0 5%; }
+        
+        /* Navbar */
+        nav { display: flex; justify-content: space-between; align-items: center; padding: 24px 0; border-bottom: 1px solid #1e293b; }
+        .logo { display: flex; align-items: center; gap: 10px; font-weight: 700; font-size: 22px; color: #fff; text-decoration: none; }
+        .logo span { color: #38bdf8; }
+        .nav-links { display: flex; gap: 28px; list-style: none; font-size: 14px; color: #94a3b8; }
+        .nav-links a { color: inherit; text-decoration: none; transition: color 0.2s; cursor: pointer; }
+        .nav-links a:hover { color: #38bdf8; }
+        .btn-github { background: #1e293b; border: 1px solid #334155; color: #fff; padding: 8px 16px; border-radius: 8px; font-size: 14px; text-decoration: none; display: flex; align-items: center; gap: 8px; font-weight: 500; cursor: pointer; }
+        .btn-github:hover { background: #334155; }
+
+        /* Hero Layout */
+        .hero { display: grid; grid-template-columns: 1fr 1fr; gap: 40px; padding: 60px 0; align-items: center; }
+        .hero-title { font-size: 44px; font-weight: 800; line-height: 1.15; letter-spacing: -0.5px; margin-bottom: 16px; background: linear-gradient(180deg, #FFFFFF 0%, #cbd5e1 100%); -webkit-background-clip: text; -webkit-text-fill-color: transparent; }
+        .hero-subtitle { font-size: 16px; color: #94a3b8; line-height: 1.6; margin-bottom: 32px; max-width: 480px; }
+        
+        /* Command Box */
+        .cmd-box { background: #111827; border: 1px solid #1f2937; padding: 14px 18px; border-radius: 10px; display: flex; justify-content: space-between; align-items: center; font-family: monospace; font-size: 14px; color: #38bdf8; max-width: 480px; margin-bottom: 24px; }
+        .cmd-box i { color: #6b7280; cursor: pointer; }
+        .cmd-box i:hover { color: #fff; }
+
+        /* Controls */
+        .benchmark-controls { display: flex; gap: 12px; align-items: center; }
+        select { background: #1e293b; border: 1px solid #334155; color: #fff; padding: 10px 14px; border-radius: 8px; font-size: 14px; outline: none; }
+        .btn-primary { background: #2563eb; color: #fff; border: none; padding: 10px 20px; border-radius: 8px; font-weight: 600; font-size: 14px; cursor: pointer; transition: background 0.2s; }
+        .btn-primary:hover { background: #1d4ed8; }
+
+        /* Chart Section */
+        .chart-wrapper { background: #0f172a; border: 1px solid #1e293b; border-radius: 16px; padding: 24px; position: relative; }
+        .chart-header { display: flex; justify-content: space-between; margin-bottom: 16px; font-size: 12px; color: #64748b; font-weight: 600; }
+        .chart-container { position: relative; height: 260px; }
+
+        /* Feature Cards */
+        .features { display: grid; grid-template-columns: repeat(3, 1fr); gap: 20px; margin: 40px 0 60px 0; }
+        .card { background: #0f172a; border: 1px solid #1e293b; border-radius: 12px; padding: 24px; }
+        .card i { font-size: 24px; color: #38bdf8; margin-bottom: 16px; }
+        .card h3 { font-size: 16px; font-weight: 600; margin-bottom: 8px; color: #f8fafc; }
+        .card p { font-size: 14px; color: #64748b; line-height: 1.5; }
+
+        /* Modal Overlay for Docs & Pricing */
+        .modal { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.8); backdrop-filter: blur(4px); z-index: 1000; justify-content: center; align-items: center; }
+        .modal-content { background: #0f172a; border: 1px solid #334155; border-radius: 16px; width: 90%; max-width: 600px; padding: 32px; position: relative; color: #f8fafc; }
+        .modal-close { position: absolute; top: 20px; right: 20px; color: #64748b; cursor: pointer; font-size: 20px; }
+        .modal-close:hover { color: #fff; }
+        .modal h2 { font-size: 22px; margin-bottom: 16px; color: #38bdf8; }
+        .modal p { color: #94a3b8; line-height: 1.6; font-size: 14px; margin-bottom: 12px; }
+        .modal pre { background: #090d16; padding: 14px; border-radius: 8px; font-family: monospace; font-size: 13px; color: #4ade80; overflow-x: auto; margin-top: 10px; }
+
+        /* Footer */
+        footer { padding: 24px 0; border-top: 1px solid #1e293b; display: flex; justify-content: space-between; font-size: 14px; color: #64748b; }
+        .footer-links { display: flex; gap: 20px; }
+        .footer-icons { display: flex; gap: 16px; }
+    </style>
+</head>
+<body>
+
+    <!-- Header Navigation -->
+    <nav>
+        <a href="#" class="logo"><i class="fa-solid fa-bolt"></i> Triton<span>X</span></a>
+        <ul class="nav-links">
+            <li><a onclick="openModal('docsModal')">Docs</a></li>
+            <li><a href="#benchmarks">Benchmarks</a></li>
+            <li><a href="#hardware">Hardware</a></li>
+            <li><a onclick="openModal('pricingModal')">Pricing</a></li>
+        </ul>
+        <button class="btn-github" onclick="openModal('githubModal')"><i class="fa-brands fa-github"></i> Star on GitHub</button>
+    </nav>
+
+    <!-- Hero Section -->
+    <section class="hero">
+        <div>
+            <h1 class="hero-title">The Universal High-Performance Matrix Runtime Compiler</h1>
+            <p class="hero-subtitle">Accelerate compute workloads across multi-core CPUs via a modern Rust shared memory backend tied seamlessly to Python via standard C-ABI.</p>
+
+            <div class="cmd-box">
+                <span>$ powershell .\run_tritonx.ps1</span>
+                <i class="fa-regular fa-copy" onclick="copyCommand()"></i>
+            </div>
+
+            <div class="benchmark-controls">
+                <select id="sizeSelect">
+                    <option value="128">128 x 128 Matrix</option>
+                    <option value="256" selected>256 x 256 Matrix</option>
+                    <option value="512">512 x 512 Matrix</option>
+                </select>
+                <button class="btn-primary" id="runBtn" onclick="executeBenchmark()">Execute Benchmark</button>
+            </div>
+        </div>
+
+        <div class="chart-wrapper" id="benchmarks">
+            <div class="chart-header">
+                <span>INFERENCE RUNTIME BENCHMARK (ms)</span>
+                <span id="gflopsDisplay">-- GFLOPS</span>
+            </div>
+            <div class="chart-container">
+                <canvas id="perfChart"></canvas>
+            </div>
+        </div>
+    </section>
+
+    <!-- Feature Grid / Hardware Section -->
+    <section class="features" id="hardware">
+        <div class="card">
+            <i class="fa-brands fa-rust"></i>
+            <h3>Built in Rust Engine</h3>
+            <p>Parallelized via Rayon thread pooling with cache-friendly tiling to eliminate memory bottlenecks.</p>
+        </div>
+        <div class="card">
+            <i class="fa-solid fa-microchip"></i>
+            <h3>High-Throughput C-ABI</h3>
+            <p>Zero-copy CTypes memory passing straight from Python into high-performance compiled dynamic libraries.</p>
+        </div>
+        <div class="card">
+            <i class="fa-solid fa-code"></i>
+            <h3>Open Source Core</h3>
+            <p>Fully customizable framework licensed for multi-threaded performance research and acceleration.</p>
+        </div>
+    </section>
+
+    <!-- Modal 1: Docs -->
+    <div id="docsModal" class="modal" onclick="closeOnOutside(event, 'docsModal')">
+        <div class="modal-content">
+            <i class="fa-solid fa-xmark modal-close" onclick="closeModal('docsModal')"></i>
+            <h2>📖 TritonX Documentation</h2>
+            <p><strong>Architecture Overview:</strong> TritonX bridges Python data structures directly to a compiled Rust DLL (`tritonx.dll`) using standard C-ABI pointers.</p>
+            <p><strong>API Endpoint:</strong></p>
+            <pre>POST /api/v1/benchmark
+Payload: { "size": 256 }</pre>
+            <p style="margin-top:12px;"><strong>Compilation:</strong></p>
+            <pre>cargo build --lib --release</pre>
+        </div>
+    </div>
+
+    <!-- Modal 2: Pricing -->
+    <div id="pricingModal" class="modal" onclick="closeOnOutside(event, 'pricingModal')">
+        <div class="modal-content">
+            <i class="fa-solid fa-xmark modal-close" onclick="closeModal('pricingModal')"></i>
+            <h2>💎 Pricing & Licensing</h2>
+            <p>TritonX is <strong>100% Free and Open Source</strong> under the MIT License.</p>
+            <p>Designed for AI developers, system engineers, and high-performance computing researchers.</p>
+        </div>
+    </div>
+
+    <!-- Modal 3: GitHub -->
+    <div id="githubModal" class="modal" onclick="closeOnOutside(event, 'githubModal')">
+        <div class="modal-content">
+            <i class="fa-solid fa-xmark modal-close" onclick="closeModal('githubModal')"></i>
+            <h2>⭐ Star TritonX on GitHub</h2>
+            <p>Thank you for supporting open-source compute acceleration!</p>
+            <p>Repository links will be attached upon deployment release.</p>
+        </div>
+    </div>
+
+    <!-- Footer -->
+    <footer>
+        <div class="footer-links">
+            <span onclick="openModal('docsModal')" style="cursor:pointer">Documentation</span>
+            <span onclick="openModal('pricingModal')" style="cursor:pointer">License</span>
+        </div>
+        <div class="footer-icons">
+            <i class="fa-brands fa-github" onclick="openModal('githubModal')" style="cursor:pointer"></i>
+            <i class="fa-brands fa-twitter" style="cursor:pointer"></i>
+        </div>
+    </footer>
+
+    <script src="app.js"></script>
+    <script>
+        function openModal(id) { document.getElementById(id).style.display = 'flex'; }
+        function closeModal(id) { document.getElementById(id).style.display = 'none'; }
+        function closeOnOutside(e, id) { if (e.target.id === id) closeModal(id); }
+        function copyCommand() {
+            navigator.clipboard.writeText('powershell .\\run_tritonx.ps1');
+            alert('Command copied to clipboard!');
+        }
+    </script>
+</body>
+</html>
