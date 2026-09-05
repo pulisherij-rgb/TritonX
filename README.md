@@ -1,6 +1,7 @@
 # TritonX Acceleration Engine
 
 A high-performance, C-ABI matrix multiplication engine written in Rust with Rayon multi-threading, bridged seamlessly to Python for low-latency, GPU-comparable CPU compute.
+<video src="git.mp4" controls width="100%"></video>
 
 ---
 
