@@ -41,6 +41,5 @@ Run the automated script to compile the native Rust binary, launch the FastAPI s
 
 ```powershell
 .\run_tritonx.ps1
-|  Chart.js Visual  |
 |  Dashboard        |
 +-------------------+
